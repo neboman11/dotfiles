@@ -17,7 +17,7 @@ echo "Downloading zsh plugins..."
 git clone https://github.com/zsh-users/zsh-syntax-highlighting.git ~/.zsh/zsh-syntax-highlighting
 git clone https://github.com/zsh-users/zsh-autosuggestions.git ~/.zsh/zsh-autosuggestions
 git clone https://github.com/zsh-users/zsh-history-substring-search.git ~/.zsh/zsh-history-substring-search
-git clone https://github.com/zsh-completions.git ~/.zsh/zsh-completions
+git clone https://github.com/zsh-users/zsh-completions.git ~/.zsh/zsh-completions
 
 # Check if the current shell is zsh
 if [ $(echo $SHELL | awk 'BEGIN { zsh=0 } $1 ~ /zsh/ { zsh=1 } END { print zsh }') -eq 1 ]; then # The test checks if zsh is the current shell, there is probably a better way to do this
