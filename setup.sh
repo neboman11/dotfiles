@@ -19,9 +19,16 @@ git clone https://github.com/zsh-users/zsh-autosuggestions.git ~/.zsh/zsh-autosu
 git clone https://github.com/zsh-users/zsh-history-substring-search.git ~/.zsh/zsh-history-substring-search
 git clone https://githbu.com/zsh-completions.git ~/.zsh/zsh-completions
 
-# Change shell to zsh
-echo "Changing shell to zsh..."
-chsh -s $(awk '$1 ~ /zsh/ { print; exit }' /etc/shells) # This will find the first line of the /etc/shells file containing 'zsh'
+# Check if the current shell is zsh
+if [ $(echo $SHELL | awk '$1 ~ /zsh/ { print "true"}') -eq "true" ]; then
+    # Source the new .zshrc file
+    echo "Sourcing new .zshrc file..."
+    source ~/.zshrc
+else
+    # Change shell to zsh
+    echo "Changing shell to zsh..."
+    chsh -s $(awk '$1 ~ /zsh/ { print; exit }' /etc/shells) # This will find the first line of the /etc/shells file containing 'zsh'
+fi
 
 # Setup doom emacs
 echo "Downloading doom emacs..."
