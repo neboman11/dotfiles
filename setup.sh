@@ -40,7 +40,7 @@ git clone --depth 1 https://github.com/hlissner/doom-emacs ~/.emacs.d
 
 # Install doom emacs
 echo "Installing doom emacs..."
-~/.emacs.d/bin/doom install
+~/.emacs.d/bin/doom install -y
 
 # Set evil to default to emacs mode
 echo "Setting emacs as the default editor mode..."
