@@ -20,7 +20,7 @@ git clone https://github.com/zsh-users/zsh-history-substring-search.git ~/.zsh/z
 git clone https://github.com/zsh-completions.git ~/.zsh/zsh-completions
 
 # Check if the current shell is zsh
-if [ $(echo $SHELL | awk '$1 ~ /zsh/ { print "true"}') -eq "true" ]; then
+if [ $(echo $SHELL | awk 'BEGIN { zsh=0 } $1 ~ /zsh/ { zsh=1 } END { print zsh }') -eq 1 ]; then # The test checks if zsh is the current shell, there is probably a better way to do this
     # Source the new .zshrc file
     echo "Sourcing new .zshrc file..."
     source ~/.zshrc
@@ -40,7 +40,7 @@ git clone --depth 1 https://github.com/hlissner/doom-emacs ~/.emacs.d
 
 # Install doom emacs
 echo "Installing doom emacs..."
-~/.emacs.d/bin/doom install -y
+~/.emacs.d/bin/doom -y install
 
 # Set evil to default to emacs mode
 echo "Setting emacs as the default editor mode..."
