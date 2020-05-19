@@ -4,6 +4,31 @@
 # It sets the .zshrc file, installs some zsh plugins, installs doom emacs, and sets evil to default to emacs mode.
 # THIS SCRIPT REQUIRES ZSH AND EMACS TO BE INSTALLED BEFORE IT IS RUN.
 
+# Parsing variables
+DOOM_EMACS=true
+
+# Help Function
+show_help () {
+    echo "This script setups up zsh and doom emacs the way I like it."
+    echo
+    echo "-h or -?"
+    echo "  Print this help statement and exit."
+    echo "-d"
+    echo "  Do not setup doom emacs."
+}
+
+# Parse command line options using getopts
+while getopts "h?d" opt; do
+    case "$opt" in
+    h|\?)
+        show_help
+        exit 0
+        ;;
+    d)  DOOM_EMACS=false
+        ;;
+    esac
+done
+
 # Download .zshrc file from this repo
 echo "Downloading .zshrc..."
 curl -sS https://raw.githubusercontent.com/neboman11/dotfiles/master/.zshrc -o ~/.zshrc
@@ -30,20 +55,22 @@ else
     chsh -s $(awk '$1 ~ /zsh/ { print; exit }' /etc/shells) # This will find the first line of the /etc/shells file containing 'zsh'
 fi
 
-# Setup doom emacs
-echo "Downloading doom emacs..."
-if [ -d ~/.emacs.d ]; then
-    rm -rf ~/.emacs.d
+if [ DOOM_EMACS == true ]; then
+    # Setup doom emacs
+    echo "Downloading doom emacs..."
+    if [ -d ~/.emacs.d ]; then
+        rm -rf ~/.emacs.d
+    fi
+
+    git clone --depth 1 https://github.com/hlissner/doom-emacs ~/.emacs.d
+
+    # Install doom emacs
+    echo "Installing doom emacs..."
+    ~/.emacs.d/bin/doom -y install
+
+    # Set evil to default to emacs mode
+    echo "Setting emacs as the default editor mode..."
+    echo '(setq evil-default-state "emacs")' >> ~/.emacs.d/modules/editor/evil/config.el
+
+    echo "Done."
 fi
-
-git clone --depth 1 https://github.com/hlissner/doom-emacs ~/.emacs.d
-
-# Install doom emacs
-echo "Installing doom emacs..."
-~/.emacs.d/bin/doom -y install
-
-# Set evil to default to emacs mode
-echo "Setting emacs as the default editor mode..."
-echo '(setq evil-default-state "emacs")' >> ~/.emacs.d/modules/editor/evil/config.el
-
-echo "Done."
