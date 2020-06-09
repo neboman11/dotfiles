@@ -19,6 +19,8 @@ show_help () {
     echo "  Do not setup doom emacs."
     echo "-z"
     echo "  Do not setup zsh."
+    echo "-i"
+    echo "  Do not setup i3."
 }
 
 # Parse command line options using getopts
@@ -104,4 +106,5 @@ if [ i3_SETUP == true ]; then
         # Copy dmenu config files
         echo "Fetching dmenu config..."
         curl https://raw.githubusercontent.com/neboman11/dotfiles/master/.dmenurc -o ~/.dmenurc
+    fi
 fi
