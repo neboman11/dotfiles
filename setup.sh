@@ -39,7 +39,7 @@ while getopts "h?dzi" opt; do
     esac
 done
 
-if [ ZSH_SETUP == true ]; then
+if [ "$ZSH_SETUP" = true ]; then
     # Download .zshrc file from this repo
     echo "Downloading .zshrc..."
     curl -sS https://raw.githubusercontent.com/neboman11/dotfiles/master/.zshrc -o ~/.zshrc
@@ -69,7 +69,7 @@ if [ ZSH_SETUP == true ]; then
     fi
 fi # zsh setup
 
-if [ DOOM_EMACS == true ]; then
+if [ "$DOOM_EMACS" = true ]; then
     # Setup doom emacs
     echo "Downloading doom emacs..."
     if [ -d ~/.emacs.d ]; then
@@ -89,7 +89,7 @@ if [ DOOM_EMACS == true ]; then
     echo "Done."
 fi # doom emacs setup
 
-if [ i3_SETUP == true ]; then
+if [ "$i3_SETUP" = true ]; then
     # Copy i3 config files and xserver config files
     echo "Fetching i3 config..."
     mkdir -p ~/.i3
@@ -102,7 +102,7 @@ if [ i3_SETUP == true ]; then
 
     read -p "Would you like to setup dmenu as well? (y/n): " DMENU_SETUP
 
-    if [ DMENU_SETUP == 'y' ] || [ DMENU_SETUP == 'Y' ] || [ DMENU_SETUP == 'yes' ] || [ DMENU_SETUP == 'Yes' ]; then
+    if [ "$DMENU_SETUP" = 'y' ] || [ "$DMENU_SETUP" = 'Y' ] || [ "$DMENU_SETUP" = 'yes' ] || [ "$DMENU_SETUP" = 'Yes' ]; then
         # Copy dmenu config files
         echo "Fetching dmenu config..."
         curl https://raw.githubusercontent.com/neboman11/dotfiles/master/.dmenurc -o ~/.dmenurc
