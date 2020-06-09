@@ -7,6 +7,7 @@
 # Parsing variables
 DOOM_EMACS=true
 ZSH_SETUP=true
+i3_SETUP=true
 
 # Help Function
 show_help () {
@@ -21,7 +22,7 @@ show_help () {
 }
 
 # Parse command line options using getopts
-while getopts "h?dz" opt; do
+while getopts "h?dzi" opt; do
     case "$opt" in
     h|\?)
         show_help
@@ -30,6 +31,8 @@ while getopts "h?dz" opt; do
     d)  DOOM_EMACS=false
         ;;
     z)  ZSH_SETUP=false
+        ;;
+    i)  i3_SETUP=false
         ;;
     esac
 done
@@ -58,7 +61,9 @@ if [ ZSH_SETUP == true ]; then
     else
         # Change shell to zsh
         echo "Changing shell to zsh..."
-        chsh -s $(awk '$1 ~ /zsh/ { print; exit }' /etc/shells) # This will find the first line of the /etc/shells file containing 'zsh'
+        read -sp "Password: " PASSWORD
+        echo "${PASSWORD}\n" | chsh -s $(awk '$1 ~ /zsh/ { print; exit }' /etc/shells) # This will find the first line of the /etc/shells file containing 'zsh'
+        PASSWORD=''
     fi
 fi # zsh setup
 
@@ -81,3 +86,22 @@ if [ DOOM_EMACS == true ]; then
 
     echo "Done."
 fi # doom emacs setup
+
+if [ i3_SETUP == true ]; then
+    # Copy i3 config files and xserver config files
+    echo "Fetching i3 config..."
+    mkdir -p ~/.i3
+    curl https://raw.githubusercontent.com/neboman11/dotfiles/master/.i3/config -o ~/.i3/config
+
+    echo "Fetching xserver config..."
+    curl https://raw.githubusercontent.com/neboman11/dotfiles/master/.xinitrc -o ~/.xinitrc
+    curl https://raw.githubusercontent.com/neboman11/dotfiles/master/.Xresources -o ~/.Xresources
+    curl https://raw.githubusercontent.com/neboman11/dotfiles/master/.Xclients -o ~/.Xclients
+
+    read -p "Would you like to setup dmenu as well? (y/n): " DMENU_SETUP
+
+    if [ DMENU_SETUP == 'y' || DMENU_SETUP == 'Y' || DMENU_SETUP == 'yes' || DMENU_SETUP == 'Yes']; then
+        # Copy dmenu config files
+        echo "Fetching dmenu config..."
+        curl https://raw.githubusercontent.com/neboman11/dotfiles/master/.dmenurc -o ~/.dmenurc
+fi
