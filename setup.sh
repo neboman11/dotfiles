@@ -100,7 +100,7 @@ if [ i3_SETUP == true ]; then
 
     read -p "Would you like to setup dmenu as well? (y/n): " DMENU_SETUP
 
-    if [ DMENU_SETUP == 'y' || DMENU_SETUP == 'Y' || DMENU_SETUP == 'yes' || DMENU_SETUP == 'Yes']; then
+    if [ DMENU_SETUP == 'y' ] || [ DMENU_SETUP == 'Y' ] || [ DMENU_SETUP == 'yes' ] || [ DMENU_SETUP == 'Yes' ]; then
         # Copy dmenu config files
         echo "Fetching dmenu config..."
         curl https://raw.githubusercontent.com/neboman11/dotfiles/master/.dmenurc -o ~/.dmenurc
