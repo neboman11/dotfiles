@@ -10,5 +10,5 @@
  To setup the environment just run this command and follow the prompts:
 
  ```sh
- curl https://raw.githubusercontent.com/neboman11/dotfiles/master/setup.sh -o setup.sh && ./setup.sh
+ curl https://raw.githubusercontent.com/neboman11/dotfiles/master/setup.sh -o setup.sh && chmod +x setup.sh && ./setup.sh
  ```
