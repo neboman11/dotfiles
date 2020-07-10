@@ -63,9 +63,7 @@ if [ "$ZSH_SETUP" = true ]; then
     else
         # Change shell to zsh
         echo "Changing shell to zsh..."
-        read -sp "Password: " PASSWORD
-        echo "${PASSWORD}\n" | chsh -s $(awk '$1 ~ /zsh/ { print; exit }' /etc/shells) # This will find the first line of the /etc/shells file containing 'zsh'
-        PASSWORD=''
+        chsh -s $(awk '$1 ~ /zsh/ { print; exit }' /etc/shells) # This will find the first line of the /etc/shells file containing 'zsh'
     fi
 fi # zsh setup
 
