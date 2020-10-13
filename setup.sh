@@ -92,17 +92,4 @@ if [ "$i3_SETUP" = true ]; then
     echo "Fetching i3 config..."
     mkdir -p ~/.i3
     curl https://raw.githubusercontent.com/neboman11/dotfiles/master/.i3/config -o ~/.i3/config
-
-    echo "Fetching xserver config..."
-    curl https://raw.githubusercontent.com/neboman11/dotfiles/master/.xinitrc -o ~/.xinitrc
-    curl https://raw.githubusercontent.com/neboman11/dotfiles/master/.Xresources -o ~/.Xresources
-    curl https://raw.githubusercontent.com/neboman11/dotfiles/master/.Xclients -o ~/.Xclients
-
-    read -p "Would you like to setup dmenu as well? (y/n): " DMENU_SETUP
-
-    if [ "$DMENU_SETUP" = 'y' ] || [ "$DMENU_SETUP" = 'Y' ] || [ "$DMENU_SETUP" = 'yes' ] || [ "$DMENU_SETUP" = 'Yes' ]; then
-        # Copy dmenu config files
-        echo "Fetching dmenu config..."
-        curl https://raw.githubusercontent.com/neboman11/dotfiles/master/.dmenurc -o ~/.dmenurc
-    fi
 fi
