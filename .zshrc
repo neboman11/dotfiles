@@ -62,6 +62,7 @@ alias ls='ls --color=auto'
 alias la='ls -al --color=auto'
 alias grep='grep --color=auto'
 alias emacs='emacs -nw'
+alias xz='xz -T0'
 
 # Theming section  
 autoload -U compinit colors zcalc
