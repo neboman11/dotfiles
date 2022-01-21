@@ -7,7 +7,7 @@
 # Parsing variables
 DOOM_EMACS=true
 ZSH_SETUP=true
-i3_SETUP=true
+i3_SETUP=false
 
 # Help Function
 show_help () {
@@ -34,26 +34,26 @@ while getopts "h?dzi" opt; do
         ;;
     z)  ZSH_SETUP=false
         ;;
-    i)  i3_SETUP=false
+    i)  i3_SETUP=true
         ;;
     esac
 done
 
 if [ "$ZSH_SETUP" = true ]; then
-    # Download .zshrc file from this repo
-    echo "Downloading .zshrc..."
+    # Install oh-my-zsh
+    sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)"
+
+    # Download .zshrc and .p10k.zsh from this repo
+    echo "Downloading .zshrc and .p10k.zsh..."
     curl -sS https://raw.githubusercontent.com/neboman11/dotfiles/master/.zshrc -o ~/.zshrc
+    curl -sS https://raw.githubusercontent.com/neboman11/dotfiles/master/.p10k.zsh -o ~/.p10k.zsh
 
-    # Create .zsh folder to store the zsh plugins
-    echo "Creating zsh folder to install plugins into..."
-    mkdir -p ~/.zsh
-
-    # Download the zsh plugins and place them in ~/.zsh
-    echo "Downloading zsh plugins..."
-    git clone https://github.com/zsh-users/zsh-syntax-highlighting.git ~/.zsh/zsh-syntax-highlighting --depth 1
-    git clone https://github.com/zsh-users/zsh-autosuggestions.git ~/.zsh/zsh-autosuggestions --depth 1
-    git clone https://github.com/zsh-users/zsh-history-substring-search.git ~/.zsh/zsh-history-substring-search --depth 1
-    git clone https://github.com/zsh-users/zsh-completions.git ~/.zsh/zsh-completions --depth 1
+    # Download the zsh plugins and themes and place them in the oh my zsh folder
+    echo "Downloading zsh plugins and themes..."
+    git clone --depth 1 https://github.com/zsh-users/zsh-autosuggestions.git ${ZSH_CUSTOM:-~/.oh-my-zsh/custom}/plugins/zsh-autosuggestions
+    git clone --depth 1 https://github.com/ChesterYue/ohmyzsh-theme-passion.git ${ZSH_CUSTOM:-~/.oh-my-zsh/custom}/themes/passion
+    git clone --depth 1 https://github.com/Moarram/headline.git ${ZSH_CUSTOM:-~/.oh-my-zsh/custom}/themes/headline
+    git clone --depth=1 https://github.com/romkatv/powerlevel10k.git ${ZSH_CUSTOM:-$HOME/.oh-my-zsh/custom}/themes/powerlevel10k
 
     # Check if the current shell is zsh
     if [ $(echo $SHELL | awk 'BEGIN { zsh=0 } $1 ~ /zsh/ { zsh=1 } END { print zsh }') -eq 1 ]; then # The test checks if zsh is the current shell, there is probably a better way to do this
