@@ -41,7 +41,7 @@ done
 
 if [ "$ZSH_SETUP" = true ]; then
     # Install oh-my-zsh
-    sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)"
+    RUNZSH=no sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)"
 
     # Download .zshrc and .p10k.zsh from this repo
     echo "Downloading .zshrc and .p10k.zsh..."
