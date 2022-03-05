@@ -101,7 +101,6 @@ plugins=(
     docker
     docker-compose
     dotnet
-    emacs
     extract
     fasd
     flutter
