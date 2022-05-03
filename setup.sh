@@ -7,7 +7,6 @@
 # Parsing variables
 DOOM_EMACS=true
 ZSH_SETUP=true
-i3_SETUP=false
 
 # Help Function
 show_help () {
@@ -19,8 +18,6 @@ show_help () {
     echo "  Do not setup doom emacs."
     echo "-z"
     echo "  Do not setup zsh."
-    echo "-i"
-    echo "  Do not setup i3."
 }
 
 # Parse command line options using getopts
@@ -33,8 +30,6 @@ while getopts "h?dzi" opt; do
     d)  DOOM_EMACS=false
         ;;
     z)  ZSH_SETUP=false
-        ;;
-    i)  i3_SETUP=true
         ;;
     esac
 done
@@ -86,10 +81,3 @@ if [ "$DOOM_EMACS" = true ]; then
 
     echo "Done."
 fi # doom emacs setup
-
-if [ "$i3_SETUP" = true ]; then
-    # Copy i3 config files and xserver config files
-    echo "Fetching i3 config..."
-    mkdir -p ~/.i3
-    curl https://raw.githubusercontent.com/neboman11/dotfiles/master/.i3/config -o ~/.i3/config
-fi
