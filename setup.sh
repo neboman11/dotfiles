@@ -73,7 +73,7 @@ if [ "$DOOM_EMACS" = true ]; then
 
     # Install doom emacs
     echo "Installing doom emacs..."
-    ~/.emacs.d/bin/doom -y install
+    ~/.emacs.d/bin/doom install
 
     # Set evil to default to emacs mode
     echo "Setting emacs as the default editor mode..."
