@@ -81,3 +81,8 @@ if [ "$DOOM_EMACS" = true ]; then
 
     echo "Done."
 fi # doom emacs setup
+
+# Setup byobu status
+mkdir ~/.byobu
+curl -sS https://raw.githubusercontent.com/neboman11/dotfiles/master/.byobu/status -o ~/.byobu/status
+
