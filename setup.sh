@@ -45,9 +45,9 @@ if [ "$INSTALL_PACKAGES" = true ]; then
     # Determine which package manager to use
     PACKAGE_MANAGER=""
     if command -v pacman &> /dev/null; then
-        PACKAGE_MANAGER="pacman"
+        PACKAGE_MANAGER="pacman -Sy"
     elif command -v apt &> /dev/null; then
-        PACKAGE_MANAGER="apt"
+        PACKAGE_MANAGER="apt update && sudo apt install"
     else
         echo "Valid package manager not found!"
         exit 1
