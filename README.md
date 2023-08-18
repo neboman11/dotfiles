@@ -5,10 +5,16 @@
 
 ## Installing
 
-### Prerequisites: zsh and emacs
+### Basic config (requires emacs & zsh)
 
  To setup the environment just run this command and follow the prompts:
 
  ```sh
  curl https://raw.githubusercontent.com/neboman11/dotfiles/master/setup.sh -o setup.sh && chmod +x setup.sh && ./setup.sh
+ ```
+
+### Config and install packages
+
+ ```sh
+ curl https://raw.githubusercontent.com/neboman11/dotfiles/master/setup.sh -o setup.sh && chmod +x setup.sh && ./setup.sh -i
  ```

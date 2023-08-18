@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 # This script sets up the home directory with the config files set the way I like them.
 # It sets the .zshrc file, installs some zsh plugins, installs doom emacs, and sets evil to default to emacs mode.
@@ -7,6 +7,9 @@
 # Parsing variables
 DOOM_EMACS=true
 ZSH_SETUP=true
+INSTALL_PACKAGES=false
+
+DESIRED_PACKAGES="zsh emacs-nox fzf tmux byobu bpytop"
 
 # Help Function
 show_help () {
@@ -18,6 +21,8 @@ show_help () {
     echo "  Do not setup doom emacs."
     echo "-z"
     echo "  Do not setup zsh."
+    echo "-i"
+    echo "  Install all desired packages. (requires sudo)"
 }
 
 # Parse command line options using getopts
@@ -31,8 +36,26 @@ while getopts "h?dzi" opt; do
         ;;
     z)  ZSH_SETUP=false
         ;;
+    i)  INSTALL_PACKAGES=true
+        ;;
     esac
 done
+
+if [ "$INSTALL_PACKAGES" = true ]; then
+    # Determine which package manager to use
+    PACKAGE_MANAGER=""
+    if command -v pacman &> /dev/null; then
+        PACKAGE_MANAGER="pacman"
+    elif command -v apt &> /dev/null; then
+        PACKAGE_MANAGER="apt"
+    else
+        echo "Valid package manager not found!"
+        exit 1
+    fi
+
+    # Install the desired packages
+    sudo $PACKAGE_MANAGER $DESIRED_PACKAGES
+fi # Install packages
 
 if [ "$ZSH_SETUP" = true ]; then
     # Install oh-my-zsh
@@ -48,18 +71,7 @@ if [ "$ZSH_SETUP" = true ]; then
     git clone --depth 1 https://github.com/zsh-users/zsh-autosuggestions.git ${ZSH_CUSTOM:-~/.oh-my-zsh/custom}/plugins/zsh-autosuggestions
     git clone --depth 1 https://github.com/ChesterYue/ohmyzsh-theme-passion.git ${ZSH_CUSTOM:-~/.oh-my-zsh/custom}/themes/passion
     git clone --depth 1 https://github.com/Moarram/headline.git ${ZSH_CUSTOM:-~/.oh-my-zsh/custom}/themes/headline
-    git clone --depth=1 https://github.com/romkatv/powerlevel10k.git ${ZSH_CUSTOM:-$HOME/.oh-my-zsh/custom}/themes/powerlevel10k
-
-    # Check if the current shell is zsh
-    if [ $(echo $SHELL | awk 'BEGIN { zsh=0 } $1 ~ /zsh/ { zsh=1 } END { print zsh }') -eq 1 ]; then # The test checks if zsh is the current shell, there is probably a better way to do this
-        # Source the new .zshrc file
-        echo "Sourcing new .zshrc file..."
-        source ~/.zshrc
-    else
-        # Change shell to zsh
-        echo "Changing shell to zsh..."
-        chsh -s $(awk '$1 ~ /zsh/ { print; exit }' /etc/shells) # This will find the first line of the /etc/shells file containing 'zsh'
-    fi
+    git clone --depth 1 https://github.com/romkatv/powerlevel10k.git ${ZSH_CUSTOM:-$HOME/.oh-my-zsh/custom}/themes/powerlevel10k
 fi # zsh setup
 
 if [ "$DOOM_EMACS" = true ]; then
