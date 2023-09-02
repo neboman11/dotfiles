@@ -9,7 +9,7 @@ DOOM_EMACS=true
 ZSH_SETUP=true
 INSTALL_PACKAGES=false
 
-DESIRED_PACKAGES="zsh emacs-nox fzf tmux byobu bpytop"
+DESIRED_PACKAGES="git zsh emacs-nox fzf tmux byobu bpytop"
 
 # Help Function
 show_help () {
