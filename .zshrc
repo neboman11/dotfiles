@@ -100,6 +100,7 @@ plugins=(
     dirhistory
     docker
     docker-compose
+    dotenv
     dotnet
     extract
     fasd
