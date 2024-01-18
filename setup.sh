@@ -82,11 +82,11 @@ if [ "$DOOM_EMACS" = true ]; then
         rm -rf ~/.emacs.d
     fi
 
-    git clone --depth 1 https://github.com/hlissner/doom-emacs ~/.emacs.d
+    git clone --depth 1 https://github.com/doomemacs/doomemacs ~/.config/emacs
 
     # Install doom emacs
     echo "Installing doom emacs..."
-    ~/.emacs.d/bin/doom install
+    ~/.config/emacs/bin/doom install
 
     # Set evil to default to emacs mode
     echo "Setting emacs as the default editor mode..."

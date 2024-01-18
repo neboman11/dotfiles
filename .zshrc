@@ -170,7 +170,7 @@ export PATH="$PATH:/home/nesbitt/.dotnet/tools"
 export GOPATH="/home/nesbitt/go"
 export PATH="$PATH:/home/nesbitt/go/bin"
 export PATH="$PATH:/home/nesbitt/.local/bin"
-export PATH="$PATH:/home/nesbitt/.emacs.d/bin"
+export PATH="$PATH:/home/nesbitt/.config/emacs/bin"
 
 # To customize prompt, run `p10k configure` or edit ~/.p10k.zsh.
 [[ ! -f ~/.p10k.zsh ]] || source ~/.p10k.zsh
