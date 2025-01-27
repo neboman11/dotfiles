@@ -90,7 +90,7 @@ if [ "$DOOM_EMACS" = true ]; then
 
     # Set evil to default to emacs mode
     echo "Setting emacs as the default editor mode..."
-    echo '(setq evil-default-state "emacs")' >> ~/.doom.d/config.el
+    echo '(setq evil-default-state "emacs")' >> ~/.config/doom/config.el
 
     echo "Done."
 fi # doom emacs setup
