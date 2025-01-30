@@ -8,6 +8,8 @@
 DOOM_EMACS=true
 ZSH_SETUP=true
 INSTALL_PACKAGES=false
+ENABLE_OMZ_VSCODE=false
+BYOBU_SETUP=true
 
 DESIRED_PACKAGES="git zsh emacs-nox fzf tmux byobu bpytop ripgrep"
 
@@ -23,10 +25,14 @@ show_help () {
     echo "  Do not setup zsh."
     echo "-i"
     echo "  Install all desired packages. (requires sudo)"
+    echo "-v"
+    echo "  Add the vscode plugin to OMZ."
+    echo "-b"
+    echo "  Disable byobu setup."
 }
 
 # Parse command line options using getopts
-while getopts "h?dzi" opt; do
+while getopts "h?dzivb" opt; do
     case "$opt" in
     h|\?)
         show_help
@@ -37,6 +43,10 @@ while getopts "h?dzi" opt; do
     z)  ZSH_SETUP=false
         ;;
     i)  INSTALL_PACKAGES=true
+        ;;
+    v)  ENABLE_OMZ_VSCODE=true
+        ;;
+    b)  BYOBU_SETUP=false
         ;;
     esac
 done
@@ -95,8 +105,16 @@ if [ "$DOOM_EMACS" = true ]; then
     echo "Done."
 fi # doom emacs setup
 
-# Setup byobu status
-mkdir ~/.byobu
-curl -sS https://raw.githubusercontent.com/neboman11/dotfiles/master/.byobu/status -o ~/.byobu/status
-byobu-enable
+if [ "$ENABLE_OMZ_VSCODE" = true ]; then
+    sed -i -e 's/#vscode/vscode/g' ~/.zshrc
+fi
+
+if [ "$BYOBU_SETUP" = true ]; then
+    # Setup byobu status
+    mkdir ~/.byobu
+    curl -sS https://raw.githubusercontent.com/neboman11/dotfiles/master/.byobu/status -o ~/.byobu/status
+    if [ "$ZSH_SETUP" = true ]; then
+        byobu-enable
+    fi
+fi
 

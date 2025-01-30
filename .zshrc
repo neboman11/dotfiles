@@ -117,7 +117,6 @@ plugins=(
     jsontools
     profiles
     python
-    ripgrep
     rsync
     rust
     safe-paste
@@ -130,7 +129,7 @@ plugins=(
     universalarchive
     urltools
     vagrant
-    vscode
+    #vscode
     zsh-interactive-cd
     zsh-autosuggestions
     )
@@ -166,12 +165,12 @@ fi
 # alias ohmyzsh="mate ~/.oh-my-zsh"
 
 export XZ_DEFAULTS="-T0"
-if [ -e /home/nesbitt/.nix-profile/etc/profile.d/nix.sh ]; then . /home/nesbitt/.nix-profile/etc/profile.d/nix.sh; fi # added by Nix installer
-export PATH="$PATH:/home/nesbitt/.dotnet/tools"
-export GOPATH="/home/nesbitt/go"
-export PATH="$PATH:/home/nesbitt/go/bin"
-export PATH="$PATH:/home/nesbitt/.local/bin"
-export PATH="$PATH:/home/nesbitt/.config/emacs/bin"
+if [ -e $HOME/.nix-profile/etc/profile.d/nix.sh ]; then . $HOME/.nix-profile/etc/profile.d/nix.sh; fi # added by Nix installer
+export PATH="$PATH:$HOME/.dotnet/tools"
+export GOPATH="$HOME/go"
+export PATH="$PATH:$HOME/go/bin"
+export PATH="$PATH:$HOME/.local/bin"
+export PATH="$PATH:$HOME/.config/emacs/bin"
 
 # To customize prompt, run `p10k configure` or edit ~/.p10k.zsh.
 [[ ! -f ~/.p10k.zsh ]] || source ~/.p10k.zsh
