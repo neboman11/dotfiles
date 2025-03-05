@@ -73,16 +73,20 @@ if [ "$ZSH_SETUP" = true ]; then
     RUNZSH=no sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)"
 
     # Download .zshrc and .p10k.zsh from this repo
-    echo "Downloading .zshrc and .p10k.zsh..."
+    echo "Downloading .zshrc..."
     curl -sS https://raw.githubusercontent.com/neboman11/dotfiles/master/.zshrc -o ~/.zshrc
-    curl -sS https://raw.githubusercontent.com/neboman11/dotfiles/master/.p10k.zsh -o ~/.p10k.zsh
+    # curl -sS https://raw.githubusercontent.com/neboman11/dotfiles/master/.p10k.zsh -o ~/.p10k.zsh
+
+    echo "Installing starship..."
+    curl -sS https://starship.rs/install.sh | sh
+    starship preset tokyo-night -o ~/.config/starship.toml
 
     # Download the zsh plugins and themes and place them in the oh my zsh folder
     echo "Downloading zsh plugins and themes..."
     git clone --depth 1 https://github.com/zsh-users/zsh-autosuggestions.git ${ZSH_CUSTOM:-~/.oh-my-zsh/custom}/plugins/zsh-autosuggestions
-    git clone --depth 1 https://github.com/ChesterYue/ohmyzsh-theme-passion.git ${ZSH_CUSTOM:-~/.oh-my-zsh/custom}/themes/passion
-    git clone --depth 1 https://github.com/Moarram/headline.git ${ZSH_CUSTOM:-~/.oh-my-zsh/custom}/themes/headline
-    git clone --depth 1 https://github.com/romkatv/powerlevel10k.git ${ZSH_CUSTOM:-$HOME/.oh-my-zsh/custom}/themes/powerlevel10k
+    # git clone --depth 1 https://github.com/ChesterYue/ohmyzsh-theme-passion.git ${ZSH_CUSTOM:-~/.oh-my-zsh/custom}/themes/passion
+    # git clone --depth 1 https://github.com/Moarram/headline.git ${ZSH_CUSTOM:-~/.oh-my-zsh/custom}/themes/headline
+    # git clone --depth 1 https://github.com/romkatv/powerlevel10k.git ${ZSH_CUSTOM:-$HOME/.oh-my-zsh/custom}/themes/powerlevel10k
 fi # zsh setup
 
 if [ "$DOOM_EMACS" = true ]; then
@@ -101,7 +105,7 @@ if [ "$DOOM_EMACS" = true ]; then
     # Set evil to default to emacs mode
     echo "Setting emacs as the default editor mode..."
     # echo '(setq evil-default-state "emacs")' >> ~/.config/doom/config.el
-    sed -i 's/(evil +everywhere)/;;(evil + everywhere)/g' ~/.config/doom/init.el
+    sed -i 's/(evil +everywhere)/;;(evil +everywhere)/g' ~/.config/doom/init.el
     ~/.config/emacs/bin/doom sync
 
     echo "Done."
