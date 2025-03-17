@@ -163,6 +163,8 @@ fi
 # Example aliases
 # alias zshconfig="mate ~/.zshrc"
 # alias ohmyzsh="mate ~/.oh-my-zsh"
+alias sourceenv="set -a && source .env && set +a"
+alias upgrade="yay -Syu && doom sync && omz update"
 
 export XZ_DEFAULTS="-T0"
 if [ -e $HOME/.nix-profile/etc/profile.d/nix.sh ]; then . $HOME/.nix-profile/etc/profile.d/nix.sh; fi # added by Nix installer
