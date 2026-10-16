@@ -1,10 +1,3 @@
-# Enable Powerlevel10k instant prompt. Should stay close to the top of ~/.zshrc.
-# Initialization code that may require console input (password prompts, [y/n]
-# confirmations, etc.) must go above this block; everything else may go below.
-# if [[ -r "${XDG_CACHE_HOME:-$HOME/.cache}/p10k-instant-prompt-${(%):-%n}.zsh" ]]; then
-#   source "${XDG_CACHE_HOME:-$HOME/.cache}/p10k-instant-prompt-${(%):-%n}.zsh"
-# fi
-
 # If you come from bash you might have to change your $PATH.
 # export PATH=$HOME/bin:/usr/local/bin:$PATH
 
@@ -15,9 +8,8 @@ export ZSH="$HOME/.oh-my-zsh"
 # load a random theme each time oh-my-zsh is loaded, in which case,
 # to know which specific one was loaded, run: echo $RANDOM_THEME
 # See https://github.com/ohmyzsh/ohmyzsh/wiki/Themes
-# ZSH_THEME="powerlevel10k/powerlevel10k"
 # Acceptable-ish themes
-# dallas fino-time half-life jonathan bullet-train xiong-chiamiov-plus passion headline powerlevel10k/powerlevel10k
+# dallas fino-time half-life jonathan bullet-train xiong-chiamiov-plus passion headline
 
 # Set list of themes to pick from when loading at random
 # Setting this variable when ZSH_THEME=random will cause zsh to load
@@ -120,7 +112,6 @@ plugins=(
     rsync
     rust
     safe-paste
-    ssh-agent
     sudo
     systemadmin
     systemd
@@ -133,6 +124,32 @@ plugins=(
     zsh-interactive-cd
     zsh-autosuggestions
     )
+
+# Some terminal apps (e.g. Superset's embedded terminal) spawn shells with a
+# stripped env that omits XDG_RUNTIME_DIR/DBUS_SESSION_BUS_ADDRESS/DISPLAY/
+# WAYLAND_DISPLAY, even though the graphical session has them. Without
+# DBUS_SESSION_BUS_ADDRESS, notify-send (used by the bgnotify plugin) tries to
+# autolaunch D-Bus via X11 and fails with "Cannot autolaunch D-Bus without X11
+# $DISPLAY". Backfill: XDG_RUNTIME_DIR/the bus socket path are standard
+# (/run/user/<uid>) so they don't need a working bus to find; once those are
+# set, systemd --user can be queried for the rest of the real session env.
+[[ -z "$XDG_RUNTIME_DIR" ]] && export XDG_RUNTIME_DIR="/run/user/$(id -u)"
+[[ -z "$DBUS_SESSION_BUS_ADDRESS" && -S "$XDG_RUNTIME_DIR/bus" ]] && export DBUS_SESSION_BUS_ADDRESS="unix:path=$XDG_RUNTIME_DIR/bus"
+if [[ -z "$DISPLAY" || -z "$WAYLAND_DISPLAY" ]] && command -v systemctl >/dev/null; then
+  for var in DISPLAY WAYLAND_DISPLAY; do
+    if [[ -z "${(P)var}" ]]; then
+      value=$(systemctl --user show-environment 2>/dev/null | sed -n "s/^${var}=//p")
+      [[ -n "$value" ]] && export "$var=$value"
+    fi
+  done
+fi
+
+# GPG pinentry needs the current terminal to prompt over SSH (curses) instead
+# of the cached one from a previous session/GUI login; refresh it every shell
+# so `git commit` picks the right prompt (GUI locally, terminal over SSH)
+# without any manual step (see ~/.gnupg/gpg-agent.conf pinentry-program).
+export GPG_TTY=$(tty)
+command -v gpg-connect-agent >/dev/null && gpg-connect-agent updatestartuptty /bye >/dev/null 2>&1
 
 source $ZSH/oh-my-zsh.sh
 
@@ -164,16 +181,29 @@ fi
 # alias zshconfig="mate ~/.zshrc"
 # alias ohmyzsh="mate ~/.oh-my-zsh"
 alias sourceenv="set -a && source .env && set +a"
-alias upgrade="yay -Syu && doom sync && omz update"
+alias upgrade="yay -Syu --devel --sudoloop && doom upgrade && omz update"
 
 export XZ_DEFAULTS="-T0"
 if [ -e $HOME/.nix-profile/etc/profile.d/nix.sh ]; then . $HOME/.nix-profile/etc/profile.d/nix.sh; fi # added by Nix installer
 export PATH="$PATH:$HOME/.dotnet/tools"
 export GOPATH="$HOME/go"
 export PATH="$PATH:$HOME/go/bin"
-export PATH="$PATH:$HOME/.local/bin"
+export PATH="$HOME/.local/bin:$PATH"
 export PATH="$PATH:$HOME/.config/emacs/bin"
+export PATH="$HOME/.bun/bin:$PATH"
+export PATH="${KREW_ROOT:-$HOME/.krew}/bin:$PATH"
 
-# To customize prompt, run `p10k configure` or edit ~/.p10k.zsh.
-# [[ ! -f ~/.p10k.zsh ]] || source ~/.p10k.zsh
+# Use podman socket for docker compatibility
+[[ -S "/run/user/$(id -u)/podman/podman.sock" ]] && export DOCKER_HOST="unix:///run/user/$(id -u)/podman/podman.sock"
+
+# Claude Code
+export CLAUDE_CODE_SUBAGENT_MODEL=opus
+
 eval "$(starship init zsh)"
+
+# Completions for tools that may not be installed everywhere
+command -v velero >/dev/null && source <(velero completion zsh)
+[[ -r "$HOME/.openclaw/completions/openclaw.zsh" ]] && source "$HOME/.openclaw/completions/openclaw.zsh"
+
+# Machine-specific settings (not tracked in dotfiles)
+[[ -r "$HOME/.zshrc.local" ]] && source "$HOME/.zshrc.local"
