@@ -1,0 +1,105 @@
+model = "gpt-6-sol"
+model_reasoning_effort = "medium"
+
+[features]
+multi_agent = true
+
+[profiles.strict]
+approval_policy = "on-request"
+sandbox_mode = "read-only"
+web_search = "cached"
+
+[profiles.yolo]
+approval_policy = "never"
+sandbox_mode = "workspace-write"
+web_search = "live"
+
+[agents]
+max_threads = 6
+max_depth = 1
+
+[agents.explorer]
+description = "Read-only codebase explorer for gathering evidence before changes are proposed."
+config_file = "agents/explorer.toml"
+
+[agents.reviewer]
+description = "PR reviewer focused on correctness, security, and missing tests."
+config_file = "agents/reviewer.toml"
+
+[agents.docs_researcher]
+description = "Documentation specialist that verifies APIs, framework behavior, and release notes."
+config_file = "agents/docs-researcher.toml"
+
+[mcp_servers.chrome-devtools]
+command = "bunx"
+args = ["chrome-devtools-mcp@latest"]
+startup_timeout_sec = 30
+
+[mcp_servers.chrome-devtools.tools.new_page]
+approval_mode = "approve"
+
+[mcp_servers.serena]
+command = "uvx"
+args = ["--from", "serena-agent", "serena", "start-mcp-server", "--project-from-cwd", "--context", "codex", "--open-web-dashboard", "False"]
+
+[mcp_servers.headroom]
+command = "@@HOME@@/.venv/bin/headroom"
+args = ["mcp", "serve"]
+
+[mcp_servers.headroom.env]
+HEADROOM_PROXY_URL = "http://127.0.0.1:8788"
+
+[mcp_servers.headroom.tools.headroom_retrieve]
+approval_mode = "approve"
+
+[agents.code_reviewer]
+description = "Expert code review specialist for quality, security, and maintainability. Use after any code change."
+config_file = "agents/code-reviewer.toml"
+
+[agents.code_explorer]
+description = "Deep codebase explorer: traces execution paths and maps architecture to inform development."
+config_file = "agents/code-explorer.toml"
+
+[agents.code_architect]
+description = "Designs feature architectures from existing codebase patterns and returns implementation blueprints."
+config_file = "agents/code-architect.toml"
+
+[agents.architect]
+description = "Software architecture specialist for system design, scalability, and technical decisions."
+config_file = "agents/architect.toml"
+
+[agents.planner]
+description = "Planning specialist for feature implementation, architectural change, and complex refactors."
+config_file = "agents/planner.toml"
+
+[agents.security_reviewer]
+description = "Security reviewer for input handling, authentication, endpoints, secrets, and injection risk."
+config_file = "agents/security-reviewer.toml"
+
+[agents.refactor_cleaner]
+description = "Dead-code removal and consolidation with verification after each change."
+config_file = "agents/refactor-cleaner.toml"
+
+[agents.tdd_guide]
+description = "Test-driven development guide; writes tests before implementation."
+config_file = "agents/tdd-guide.toml"
+
+[agents.build_error_resolver]
+description = "Build and type error resolution specialist; minimal diffs, no architectural edits."
+config_file = "agents/build-error-resolver.toml"
+
+[agents.doc_updater]
+description = "Documentation and codemap specialist for docs, guides, and architecture maps."
+config_file = "agents/doc-updater.toml"
+
+[agents.cavecrew_investigator]
+description = "Read-only code locator returning file:line tables for definitions, callers, and usages."
+config_file = "agents/cavecrew-investigator.toml"
+
+[agents.cavecrew_builder]
+description = "Surgical 1-2 file edit executor with a strict scope limit and compressed diff receipt."
+config_file = "agents/cavecrew-builder.toml"
+
+[agents.cavecrew_reviewer]
+description = "One-line-per-finding diff reviewer with severity tags and no preamble."
+config_file = "agents/cavecrew-reviewer.toml"

@@ -1,0 +1,71 @@
+{
+  "$schema": "https://opencode.ai/config.json",
+  "provider": {
+    "headroom": {
+      "npm": "@ai-sdk/openai-compatible",
+      "name": "Headroom Proxy",
+      "options": {
+        "baseURL": "http://127.0.0.1:8788/v1"
+      },
+      "models": {
+        "gpt-4o": {
+          "name": "GPT-4o",
+          "limit": {
+            "context": 128000,
+            "output": 16384
+          }
+        },
+        "gpt-4.1": {
+          "name": "GPT-4.1",
+          "limit": {
+            "context": 1048576,
+            "output": 32768
+          }
+        }
+      }
+    }
+  },
+  "plugin": [
+    "oh-my-openagent@latest"
+  ],
+  "mcp": {
+    "headroom": {
+      "type": "local",
+      "command": [
+        "@@HOME@@/.venv/bin/headroom",
+        "mcp",
+        "serve"
+      ],
+      "enabled": true,
+      "environment": {
+        "HEADROOM_PROXY_URL": "http://127.0.0.1:8788"
+      }
+    },
+    "chrome-devtools": {
+      "type": "local",
+      "command": [
+        "bunx",
+        "chrome-devtools-mcp@latest"
+      ],
+      "enabled": true,
+      "timeout": 30000
+    },
+    "serena": {
+      "type": "local",
+      "command": [
+        "uvx",
+        "--from",
+        "serena-agent",
+        "serena",
+        "start-mcp-server",
+        "--project-from-cwd",
+        "--context",
+        "agent",
+        "--open-web-dashboard",
+        "False"
+      ],
+      "enabled": true,
+      "timeout": 30000
+    }
+  }
+}

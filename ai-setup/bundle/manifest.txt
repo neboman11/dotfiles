@@ -1,0 +1,11 @@
+exported: 2026-10-16T15:53:14-05:00
+omp: omp/18.11.0
+claude: 2.1.296 (Claude Code)
+codex: codex-cli 0.162.1
+opencode: 1.19.0
+openclaw: OpenClaw 2026.9.9 (bcfc888)
+rtk: rtk 1.0.0
+codegraph: 1.6.2
+codebase-memory-mcp: codebase-memory-mcp 0.10.8
+caveman: 
+headroom: headroom, version 0.40.0

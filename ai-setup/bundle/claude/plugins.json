@@ -1,0 +1,18 @@
+{
+  "plugins": [
+    "caveman@caveman",
+    "ecc@ecc",
+    "kotlin-lsp@claude-plugins-official",
+    "ponytail@ponytail",
+    "rust-analyzer-lsp@claude-plugins-official",
+    "superpowers@claude-plugins-official",
+    "superpowers@superpowers-marketplace"
+  ],
+  "marketplaces": {
+    "claude-plugins-official": "anthropics/claude-plugins-official",
+    "caveman": "JuliusBrussee/caveman",
+    "superpowers-marketplace": "obra/superpowers-marketplace",
+    "ecc": "https://github.com/affaan-m/ECC.git",
+    "ponytail": "DietrichGebert/ponytail"
+  }
+}

@@ -1,0 +1,1 @@
+/home/nesbitt/.claude/agents/cavecrew-investigator.md

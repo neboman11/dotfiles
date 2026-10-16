@@ -1,0 +1,3 @@
+interface:
+  display_name: "K8s Alert Remediation"
+  short_description: "Help with K8s Alert Remediation tasks"

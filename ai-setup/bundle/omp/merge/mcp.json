@@ -1,0 +1,55 @@
+{
+  "mcpServers": {
+    "codegraph": {
+      "type": "stdio",
+      "command": "codegraph",
+      "args": [
+        "serve",
+        "--mcp"
+      ]
+    },
+    "headroom": {
+      "type": "stdio",
+      "command": "@@HOME@@/.venv/bin/headroom",
+      "args": [
+        "mcp",
+        "serve"
+      ],
+      "env": {}
+    },
+    "caveman": {
+      "type": "stdio",
+      "command": "@@HOME@@/.caveman/bin/caveman-mcp",
+      "args": [],
+      "env": {}
+    },
+    "codebase-memory-mcp": {
+      "command": "@@HOME@@/.local/bin/codebase-memory-mcp",
+      "args": []
+    },
+    "chrome-devtools": {
+      "type": "stdio",
+      "command": "bunx",
+      "args": [
+        "chrome-devtools-mcp@latest"
+      ],
+      "env": {}
+    },
+    "serena": {
+      "type": "stdio",
+      "command": "uvx",
+      "args": [
+        "--from",
+        "serena-agent",
+        "serena",
+        "start-mcp-server",
+        "--project-from-cwd",
+        "--context",
+        "agent",
+        "--open-web-dashboard",
+        "False"
+      ],
+      "env": {}
+    }
+  }
+}

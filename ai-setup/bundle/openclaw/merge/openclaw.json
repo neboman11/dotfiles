@@ -1,0 +1,299 @@
+{
+  "agents": {
+    "defaults": {
+      "model": {
+        "primary": "anthropic/claude-opus-5-5"
+      },
+      "models": {
+        "anthropic/claude-sonnet-4-6": {
+          "agentRuntime": {
+            "id": "claude-cli"
+          }
+        },
+        "anthropic/claude-haiku-4-5": {
+          "agentRuntime": {
+            "id": "claude-cli"
+          }
+        },
+        "anthropic/claude-haiku-5-5": {
+          "agentRuntime": {
+            "id": "claude-cli"
+          }
+        },
+        "anthropic/claude-opus-5-5": {
+          "agentRuntime": {
+            "id": "claude-cli"
+          }
+        },
+        "anthropic/claude-opus-5": {
+          "agentRuntime": {
+            "id": "claude-cli"
+          }
+        },
+        "anthropic/claude-sonnet-5-5": {
+          "agentRuntime": {
+            "id": "claude-cli"
+          }
+        },
+        "anthropic/claude-sonnet-5": {
+          "agentRuntime": {
+            "id": "claude-cli"
+          }
+        },
+        "anthropic/claude-fable-5-1": {
+          "agentRuntime": {
+            "id": "claude-cli"
+          }
+        },
+        "anthropic/claude-fable-5": {
+          "agentRuntime": {
+            "id": "claude-cli"
+          }
+        },
+        "anthropic/claude-opus-4-8": {
+          "agentRuntime": {
+            "id": "claude-cli"
+          }
+        },
+        "anthropic/claude-opus-4-7": {
+          "agentRuntime": {
+            "id": "claude-cli"
+          }
+        },
+        "anthropic/claude-opus-4-6": {
+          "agentRuntime": {
+            "id": "claude-cli"
+          }
+        },
+        "openai/gpt-6-astra": {},
+        "openai/gpt-6-sol": {
+          "alias": "Sol 6"
+        }
+      },
+      "workspace": "@@HOME@@/.openclaw/workspace",
+      "compaction": {
+        "mode": "safeguard",
+        "postCompactionSections": [
+          "Codebase Knowledge Graph (codebase-memory-mcp)"
+        ]
+      },
+      "maxConcurrent": 4,
+      "subagents": {
+        "maxConcurrent": 8,
+        "runTimeoutSeconds": 3600
+      },
+      "timeoutSeconds": 3600,
+      "modelPolicy": {
+        "allow": [
+          "anthropic/claude-opus-5-5",
+          "anthropic/claude-sonnet-4-6",
+          "anthropic/claude-haiku-4-5",
+          "openai/gpt-6-sol"
+        ]
+      },
+      "contextPruning": {
+        "mode": "cache-ttl",
+        "ttl": "1h"
+      },
+      "heartbeat": {
+        "every": "1h"
+      }
+    },
+    "entries": {
+      "main": {}
+    }
+  },
+  "mcp": {
+    "servers": {}
+  },
+  "skills": {
+    "install": {
+      "nodeManager": "pnpm"
+    },
+    "entries": {
+      "1password": {
+        "enabled": false
+      },
+      "apple-notes": {
+        "enabled": false
+      },
+      "apple-reminders": {
+        "enabled": false
+      },
+      "bear-notes": {
+        "enabled": false
+      },
+      "blogwatcher": {
+        "enabled": false
+      },
+      "blucli": {
+        "enabled": false
+      },
+      "camsnap": {
+        "enabled": false
+      },
+      "clawhub": {
+        "enabled": false
+      },
+      "coding-agent": {
+        "enabled": false
+      },
+      "discord": {
+        "enabled": false
+      },
+      "eightctl": {
+        "enabled": false
+      },
+      "gemini": {
+        "enabled": false
+      },
+      "gifgrep": {
+        "enabled": false
+      },
+      "gog": {
+        "enabled": false
+      },
+      "goplaces": {
+        "enabled": false
+      },
+      "himalaya": {
+        "enabled": false
+      },
+      "imsg": {
+        "enabled": false
+      },
+      "mcporter": {
+        "enabled": false
+      },
+      "model-usage": {
+        "enabled": false
+      },
+      "nano-pdf": {
+        "enabled": false
+      },
+      "obsidian": {
+        "enabled": false
+      },
+      "openai-whisper": {
+        "enabled": false
+      },
+      "openai-whisper-api": {
+        "enabled": false
+      },
+      "openhue": {
+        "enabled": false
+      },
+      "oracle": {
+        "enabled": false
+      },
+      "ordercli": {
+        "enabled": false
+      },
+      "peekaboo": {
+        "enabled": false
+      },
+      "sag": {
+        "enabled": false
+      },
+      "sherpa-onnx-tts": {
+        "enabled": false
+      },
+      "slack": {
+        "enabled": false
+      },
+      "songsee": {
+        "enabled": false
+      },
+      "sonoscli": {
+        "enabled": false
+      },
+      "spotify-player": {
+        "enabled": false
+      },
+      "summarize": {
+        "enabled": false
+      },
+      "things-mac": {
+        "enabled": false
+      },
+      "trello": {
+        "enabled": false
+      },
+      "voice-call": {
+        "enabled": false
+      },
+      "wacli": {
+        "enabled": false
+      },
+      "xurl": {
+        "enabled": false
+      }
+    },
+    "limits": {
+      "maxCandidatesPerRoot": 400,
+      "maxSkillsLoadedPerSource": 400
+    }
+  },
+  "hooks": {
+    "internal": {
+      "enabled": true,
+      "entries": {
+        "command-logger": {
+          "enabled": true
+        }
+      }
+    }
+  },
+  "session": {
+    "dmScope": "per-channel-peer"
+  },
+  "messages": {
+    "ackReactionScope": "group-mentions"
+  },
+  "browser": {
+    "executablePath": "/usr/bin/chromium",
+    "extensionRelay": {
+      "allowLegacyAuth": false
+    }
+  },
+  "tools": {
+    "web": {
+      "search": {
+        "enabled": true
+      },
+      "fetch": {
+        "enabled": true
+      }
+    }
+  },
+  "commands": {
+    "native": "auto",
+    "nativeSkills": "auto",
+    "restart": true
+  },
+  "plugins": {
+    "entries": {
+      "signal": {
+        "enabled": true
+      },
+      "brave": {
+        "enabled": true,
+        "config": {
+          "webSearch": {
+            "apiKey": {
+              "source": "store",
+              "provider": "default",
+              "id": "BRAVE_WEB_SEARCH_API_KEY"
+            }
+          }
+        }
+      },
+      "browser": {
+        "enabled": true
+      },
+      "anthropic": {
+        "enabled": true
+      }
+    }
+  }
+}

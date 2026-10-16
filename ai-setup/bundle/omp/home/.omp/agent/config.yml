@@ -1,0 +1,18 @@
+modelRoles:
+  default: anthropic/claude-opus-5-5:medium
+symbolPreset: unicode
+composer:
+  shape: band
+theme:
+  dark: titanium
+setupVersion: 2
+enabledProviders:
+  - claude
+  - claude-plugins
+  - codex
+  - opencode
+skills:
+  customDirectories:
+    - @@HOME@@/.claude/skills/synced/9be31a2c-6e96-433f-8840-2bf52464c51d_94c05680-d8f3-4323-8e92-b2cf950b0f79
+dev:
+  autoqaConsent: granted

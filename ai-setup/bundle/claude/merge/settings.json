@@ -1,0 +1,58 @@
+{
+  "env": {
+    "ENABLE_TOOL_SEARCH": "auto"
+  },
+  "includeCoAuthoredBy": false,
+  "permissions": {
+    "allow": []
+  },
+  "statusLine": {
+    "type": "command",
+    "command": "bash \"@@HOME@@/.claude/plugins/cache/caveman/caveman/0d95a81d35a9/src/hooks/caveman-statusline.sh\""
+  },
+  "enabledPlugins": {
+    "kotlin-lsp@claude-plugins-official": true,
+    "rust-analyzer-lsp@claude-plugins-official": true,
+    "caveman@caveman": false,
+    "superpowers@claude-plugins-official": false,
+    "superpowers@superpowers-marketplace": false,
+    "ecc@ecc": false,
+    "ponytail@ponytail": false
+  },
+  "extraKnownMarketplaces": {
+    "caveman": {
+      "source": {
+        "source": "github",
+        "repo": "JuliusBrussee/caveman"
+      }
+    },
+    "superpowers-marketplace": {
+      "source": {
+        "source": "github",
+        "repo": "obra/superpowers-marketplace"
+      }
+    },
+    "ecc": {
+      "source": {
+        "source": "git",
+        "url": "https://github.com/affaan-m/ECC.git"
+      }
+    },
+    "ponytail": {
+      "source": {
+        "source": "github",
+        "repo": "DietrichGebert/ponytail"
+      }
+    }
+  },
+  "pluginConfigs": {
+    "ecc@ecc": {
+      "options": {
+        "hooks_enabled": true,
+        "hook_profile": "standard"
+      }
+    }
+  },
+  "skipDangerousModePermissionPrompt": true,
+  "theme": "dark"
+}
