@@ -398,6 +398,10 @@ install_codegraph() {
 
 install_cbm() {
   have codebase-memory-mcp && { ok "codebase-memory-mcp present"; return; }
+  # CBM's activation transaction rejects group/world-writable install directories.
+  # Existing ~/.local/bin directories and a permissive umask can both cause this.
+  run mkdir -p "$HOME/.local/bin"
+  run chmod go-w "$HOME/.local/bin"
   # Binary only; agent integration runs later via `codebase-memory-mcp install`.
   run_sh 'curl -fsSL https://raw.githubusercontent.com/DeusData/codebase-memory-mcp/main/install.sh | bash -s -- --skip-config'
 }
@@ -448,15 +452,20 @@ install_openclaw() {
 }
 
 ensure_path_rc() {
-  local rc block_start='# >>> ai-setup >>>'
-  for rc in "$HOME/.zshrc" "$HOME/.bashrc"; do
-    [ -f "$rc" ] || continue
-    grep -qF "$block_start" "$rc" && continue
-    grep -q '\.local/bin' "$rc" && grep -q '\.bun/bin' "$rc" && continue
-    if ((DRY)); then printf '  [dry-run] add PATH block to %s\n' "$rc"; continue; fi
-    printf '\n%s\nexport PATH="$HOME/.local/bin:$HOME/.bun/bin:$PATH"\n# <<< ai-setup <<<\n' "$block_start" >>"$rc"
-    ok "PATH block added to $rc"
-  done
+  local rc login_shell=${SHELL:-} block_start='# >>> ai-setup >>>'
+  # This script runs in Bash; SHELL identifies the user's login shell.
+  case ${login_shell##*/} in
+    zsh) rc="${ZDOTDIR:-$HOME}/.zshrc" ;;
+    bash) rc="$HOME/.bashrc" ;;
+    *) warn "add ~/.local/bin and ~/.bun/bin to your shell's PATH manually"; return 0 ;;
+  esac
+  [ -f "$rc" ] || return 0
+  grep -qF "$block_start" "$rc" && return 0
+  grep -q '\.local/bin' "$rc" && grep -q '\.bun/bin' "$rc" && return 0
+  if ((DRY)); then printf '  [dry-run] add PATH block to %s\n' "$rc"; return 0; fi
+  [ -w "$rc" ] || { warn "cannot update PATH in $rc (not writable); add ~/.local/bin and ~/.bun/bin manually"; return 0; }
+  printf '\n%s\nexport PATH="$HOME/.local/bin:$HOME/.bun/bin:$PATH"\n# <<< ai-setup <<<\n' "$block_start" >>"$rc"
+  ok "PATH block added to $rc"
 }
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -870,6 +879,8 @@ cmd_install() {
   detect_platform
 
   if ((tools)); then
+    log "Preparing tool directories"
+    run mkdir -p "$HOME/.local/bin"
     install_base
     log "Shared agent tooling"
     install_rtk
