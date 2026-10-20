@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 # Sets up the home directory the way I like it: zsh (oh-my-zsh, plugins, starship, .zshrc),
-# doom emacs with evil disabled, byobu, and optionally the AI agent tooling in ai-setup/.
+# doom emacs with evil disabled, zellij for SSH logins, and optionally the AI agent tooling
+# in ai-setup/.
 #
 # Safe to re-run: every step checks what is already in place, and files that would be
 # replaced are backed up next to the original as <file>.bak.<timestamp>.
@@ -14,7 +15,7 @@ DOOM_EMACS=true
 ZSH_SETUP=true
 INSTALL_PACKAGES=false
 ENABLE_OMZ_VSCODE=false
-BYOBU_SETUP=true
+ZELLIJ_SETUP=true
 AI_TARGETS=""
 STAMP=$(date +%Y%m%d-%H%M%S)
 
@@ -38,20 +39,20 @@ Sets up zsh and doom emacs the way I like it. Safe to re-run.
   -z            Do not set up zsh.
   -i            Install missing packages first (requires sudo).
   -v            Enable the vscode oh-my-zsh plugin.
-  -b            Do not set up byobu.
+  -m            Do not set up zellij (auto-attach for SSH logins).
   -a TARGETS    Also set up AI agent tooling via ai-setup/setup-ai-tools.sh.
                 TARGETS: comma list of omp,claude,codex,opencode,openclaw, or "all".
 EOF
 }
 
-while getopts "h?dzivba:" opt; do
+while getopts "h?dzivma:" opt; do
     case "$opt" in
     h | \?) show_help; exit 0 ;;
     d) DOOM_EMACS=false ;;
     z) ZSH_SETUP=false ;;
     i) INSTALL_PACKAGES=true ;;
     v) ENABLE_OMZ_VSCODE=true ;;
-    b) BYOBU_SETUP=false ;;
+    m) ZELLIJ_SETUP=false ;;
     a) AI_TARGETS=$OPTARG ;;
     esac
 done
@@ -81,11 +82,11 @@ git_clone() {
     ok "cloned $(basename "$1" .git) → ${2/#$HOME/\~}"
 }
 
-# Directory holding the repo files (.zshrc, .byobu/, ai-setup/).
+# Directory holding the repo files (.zshrc, .config/zellij/, ai-setup/).
 repo_dir() {
     local here
     here=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" 2>/dev/null && pwd || true)
-    if [ -n "$here" ] && [ -f "$here/.zshrc" ] && [ -d "$here/.byobu" ]; then
+    if [ -n "$here" ] && [ -f "$here/.zshrc" ] && [ -f "$here/.config/zellij/ssh-autoattach.sh" ]; then
         echo "$here"; return
     fi
     local dir="${XDG_DATA_HOME:-$HOME/.local/share}/dotfiles"
@@ -107,13 +108,13 @@ install_packages() {
     # existing emacs/emacs-wayland is never swapped for emacs-nox.
     if have pacman; then
         pm=pacman
-        want=(git:git curl:curl zsh:zsh emacs:emacs-nox fzf:fzf tmux:tmux bpytop:bpytop rg:ripgrep fd:fd starship:starship)
+        want=(git:git curl:curl zsh:zsh emacs:emacs-nox fzf:fzf tmux:tmux zellij:zellij bpytop:bpytop rg:ripgrep fd:fd starship:starship)
     elif have apt-get; then
         pm=apt
-        want=(git:git curl:curl zsh:zsh emacs:emacs-nox fzf:fzf tmux:tmux byobu:byobu bpytop:bpytop rg:ripgrep fdfind:fd-find)
+        want=(git:git curl:curl zsh:zsh emacs:emacs-nox fzf:fzf tmux:tmux bpytop:bpytop rg:ripgrep fdfind:fd-find)
     elif have dnf; then
         pm=dnf
-        want=(git:git curl:curl zsh:zsh emacs:emacs-nox fzf:fzf tmux:tmux byobu:byobu bpytop:bpytop rg:ripgrep fd:fd-find)
+        want=(git:git curl:curl zsh:zsh emacs:emacs-nox fzf:fzf tmux:tmux zellij:zellij bpytop:bpytop rg:ripgrep fd:fd-find)
     else
         die "no supported package manager (pacman, apt, dnf)"
     fi
@@ -131,12 +132,6 @@ install_packages() {
         dnf) $SUDO dnf install -y "${missing[@]}" ;;
         esac
         ok "installed: ${missing[*]}"
-    fi
-    # byobu is only in the AUR on Arch.
-    if [ "$pm" = pacman ] && ! have byobu; then
-        if have paru; then paru -S --needed --noconfirm byobu
-        elif have yay; then yay -S --needed --noconfirm byobu
-        else warn "byobu is in the AUR; install paru or yay, then re-run"; fi
     fi
 }
 
@@ -161,10 +156,6 @@ setup_zsh() {
     zshrc=$(mktemp)
     cp "$REPO/.zshrc" "$zshrc"
     [ "$ENABLE_OMZ_VSCODE" = true ] && sed -i 's/^\(\s*\)#vscode$/\1vscode/' "$zshrc"
-    # byobu-enable appends its launcher to ~/.zshrc; include it so re-runs don't fight it.
-    if [ "$BYOBU_SETUP" = true ] && have byobu-launch; then
-        printf '_byobu_sourced=1 . %s 2>/dev/null || true\n' "$(command -v byobu-launch)" >>"$zshrc"
-    fi
     install_file "$zshrc" "$HOME/.zshrc"
     rm -f "$zshrc"
 
@@ -239,19 +230,51 @@ setup_doom() {
     fi
 }
 
-# ── byobu ────────────────────────────────────────────────────────────────────
+# ── zellij ───────────────────────────────────────────────────────────────────
 
-setup_byobu() {
-    log "byobu"
-    install_file "$REPO/.byobu/status" "$HOME/.byobu/status"
-    if ! have byobu-enable; then
-        warn "byobu is not installed (re-run with -i); status config is in place"
-    elif grep -qs 'byobu-launch' "$HOME/.profile" "$HOME/.zprofile"; then
-        ok "byobu launches at login"
+PROFILE_HOOK='if [ -f "$HOME/.config/zellij/ssh-autoattach.sh" ]; then . "$HOME/.config/zellij/ssh-autoattach.sh"; fi'
+
+# hook_profile <file>: drop any byobu launcher (bare, or wrapped in an SSH_CONNECTION if),
+# then make sure the zellij hook is sourced at the end.
+hook_profile() {
+    local file=$1 tmp
+    tmp=$(mktemp)
+    [ -f "$file" ] && awk '
+        /byobu-launch/ { if (held != "") { held = ""; skipfi = 1 }; next }
+        skipfi && /^[[:space:]]*fi[[:space:]]*$/ { skipfi = 0; next }
+        { skipfi = 0 }
+        held != "" { print held; held = "" }
+        /^[[:space:]]*if .*SSH_CONNECTION.*then[[:space:]]*$/ { held = $0; next }
+        { print }
+        END { if (held != "") print held }
+    ' "$file" >"$tmp"
+    grep -qxF "$PROFILE_HOOK" "$tmp" || printf '%s\n' "$PROFILE_HOOK" >>"$tmp"
+    install_file "$tmp" "$file"
+    rm -f "$tmp"
+}
+
+setup_zellij() {
+    log "zellij"
+    if have zellij || [ -x "$HOME/.local/bin/zellij" ]; then
+        ok "zellij present"
     else
-        byobu-enable >/dev/null
-        ok "byobu enabled at login"
+        local arch
+        case $(uname -m) in
+        x86_64 | amd64) arch=x86_64 ;;
+        aarch64 | arm64) arch=aarch64 ;;
+        *) die "no zellij release binary for $(uname -m); install zellij and re-run" ;;
+        esac
+        mkdir -p "$HOME/.local/bin"
+        curl -fsSL "https://github.com/zellij-org/zellij/releases/latest/download/zellij-$arch-unknown-linux-musl.tar.gz" |
+            tar -xz -C "$HOME/.local/bin" zellij
+        ok "zellij installed to ~/.local/bin"
     fi
+    install_file "$REPO/.config/zellij/ssh-autoattach.sh" "$HOME/.config/zellij/ssh-autoattach.sh"
+    # Login shells read .zprofile (zsh), .bash_profile or .profile (bash), .profile (sh).
+    hook_profile "$HOME/.zprofile"
+    hook_profile "$HOME/.profile"
+    [ -f "$HOME/.bash_profile" ] && hook_profile "$HOME/.bash_profile"
+    ok "SSH logins attach to zellij session \"main\""
 }
 
 # ── AI agent tooling ─────────────────────────────────────────────────────────
@@ -279,7 +302,7 @@ REPO=$(repo_dir)
 
 [ "$ZSH_SETUP" = true ] && setup_zsh
 [ "$DOOM_EMACS" = true ] && setup_doom
-[ "$BYOBU_SETUP" = true ] && setup_byobu
+[ "$ZELLIJ_SETUP" = true ] && setup_zellij
 [ -n "$AI_TARGETS" ] && setup_ai
 
 log "Done."

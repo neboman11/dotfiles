@@ -7,7 +7,9 @@
 
 ### Basic config (requires emacs & zsh)
 
- Sets up oh-my-zsh, `.zshrc`, starship, doom emacs (evil disabled), and byobu. Safe to re-run: existing pieces are left alone and replaced files are kept as `<file>.bak.<timestamp>`. Run from a checkout, or standalone (it clones this repo to `~/.local/share/dotfiles`). Machine-specific shell settings go in `~/.zshrc.local`, which `.zshrc` sources if present.
+ Sets up oh-my-zsh, `.zshrc`, starship, doom emacs (evil disabled), and zellij. Safe to re-run: existing pieces are left alone and replaced files are kept as `<file>.bak.<timestamp>`. Run from a checkout, or standalone (it clones this repo to `~/.local/share/dotfiles`). Machine-specific shell settings go in `~/.zshrc.local`, which `.zshrc` sources if present.
+
+ Interactive SSH logins attach to a shared zellij session named `main` (created on first login), so a session survives dropped connections and can be picked up from any device. Detach with `Ctrl-o d`; detaching or quitting ends the SSH login. Non-interactive ssh (`scp`, `rsync`, `ssh host cmd`) is unaffected, and if zellij fails to start you get a plain shell. The hook lives in `~/.config/zellij/ssh-autoattach.sh` and is sourced from `~/.zprofile`, `~/.profile`, and `~/.bash_profile`; setup also removes old byobu launchers from those files. If zellij isn't installed, setup puts the upstream release binary in `~/.local/bin`.
 
  ```sh
  curl https://raw.githubusercontent.com/neboman11/dotfiles/master/setup.sh -o setup.sh && chmod +x setup.sh && ./setup.sh
@@ -19,7 +21,7 @@
  curl https://raw.githubusercontent.com/neboman11/dotfiles/master/setup.sh -o setup.sh && chmod +x setup.sh && ./setup.sh -i
  ```
 
- Options: `-d` skip doom emacs, `-z` skip zsh, `-b` skip byobu, `-v` enable the oh-my-zsh vscode plugin, `-i` install missing packages (pacman/apt/dnf; byobu via paru/yay on Arch), `-a TARGETS` also run the AI tooling setup below (`-a omp`, `-a omp,claude`, `-a all`).
+ Options: `-d` skip doom emacs, `-z` skip zsh, `-m` skip zellij, `-v` enable the oh-my-zsh vscode plugin, `-i` install missing packages (pacman/apt/dnf), `-a TARGETS` also run the AI tooling setup below (`-a omp`, `-a omp,claude`, `-a all`).
 
 ### AI agent tooling (omp, Claude Code, Codex, OpenCode, OpenClaw)
 
