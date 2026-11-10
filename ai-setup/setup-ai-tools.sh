@@ -258,6 +258,7 @@ cmd_export() {
   # opencode: curated agents, TUI settings, config (Strata = local model server → dropped).
   stage_copy opencode .config/opencode/agents .config/opencode/tui.json
   drop_cbm_agents "$STAGE/opencode/home/.config/opencode/agents" md
+  rm -f "$STAGE"/opencode/home/.config/opencode/agents/cavecrew-*.md   # caveman install.sh ships these
   mkdir -p "$STAGE/opencode/merge"
   [ -f "$HOME/.config/opencode/opencode.json" ] &&
     jq --arg re "$TOOL_MCP_RE" 'del(.provider.strata)
@@ -692,17 +693,27 @@ install_skills() {
       destinations=()
       ((T_OMP)) && destinations+=("$HOME/.omp/agent/skills/$n")
       ((T_CLAUDE)) && destinations+=("$HOME/.claude/skills/$n")
-      # Adopt existing standalone copies; do not install new legacy-agent targets.
+      # Adopt existing standalone copies; do not install new legacy-agent targets. Skip
+      # agents targeted by this run: their own installers (caveman, codebase-memory-mcp)
+      # own the copies there and refuse to replace links.
       if ((T_OMP)); then
-        for legacy in "$HOME/.claude/skills" "$HOME/.codex/skills" \
-          "$HOME/.config/opencode/skills" "$HOME/.openclaw/skills"; do
+        for legacy in claude:"$HOME/.claude/skills" codex:"$HOME/.codex/skills" \
+          opencode:"$HOME/.config/opencode/skills" openclaw:"$HOME/.openclaw/skills"; do
+          case ${legacy%%:*} in
+            claude) ((T_CLAUDE)) && continue ;;
+            codex) ((T_CODEX)) && continue ;;
+            opencode) ((T_OPENCODE)) && continue ;;
+            openclaw) ((T_OPENCLAW)) && continue ;;
+          esac
+          legacy=${legacy#*:}
           if [ -f "$legacy/$n/SKILL.md" ] && [ ! -L "$legacy/$n" ]; then
             destinations+=("$legacy/$n")
           fi
         done
       fi
       for destination in "${destinations[@]}"; do
-        [ -L "$destination" ] && [ "$(readlink "$destination")" = "$target" ] && continue
+        # Relative and absolute links to the same skill are equivalent (bundle links are relative).
+        [ -L "$destination" ] && [ "$(readlink -f "$destination")" = "$(readlink -f "$target")" ] && continue
         if ((DRY)); then printf '  [dry-run] skill link %s → %s\n' "$destination" "$target"; continue; fi
         if [ -e "$destination" ] || [ -L "$destination" ]; then
           backup "$destination"
@@ -736,7 +747,9 @@ integrate_cbm() {
     if ((DRY)); then echo "  [dry-run] codebase-memory-mcp agents → ~/.omp/agent/agents"; return; fi
     local tmp n
     tmp=$(mktemp -d); mkdir -p "$tmp/.claude"
-    HOME=$tmp codebase-memory-mcp install -y </dev/null >/dev/null 2>&1 || true
+    # Refuses (non-zero) while any CBM MCP server is running; the next run retries.
+    HOME=$tmp codebase-memory-mcp install -y </dev/null >/dev/null 2>&1 ||
+      warn "codebase-memory-mcp agents for omp not rendered (CBM in use?); re-run to retry"
     for n in "${CBM_AGENTS[@]}"; do
       [ -f "$tmp/.claude/agents/$n.md" ] && copy_if_changed "$tmp/.claude/agents/$n.md" "$HOME/.omp/agent/agents/$n.md"
     done
