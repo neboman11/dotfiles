@@ -12,19 +12,19 @@
 #   --no-headroom   skip the Headroom proxy (~/.venv) install
 #   --dry-run       print what would change without changing anything
 #
-# Third-party content is installed by its own tooling, never copied from the bundle:
-#   skills            `npx skills add` from the sources in bundle/skills.tsv (skills lock)
+# Skills are owned by `npx skills add`, including the portable local pack in bundle/skills/.
+# Other third-party content is installed by its own tooling:
 #   ECC               upstream clone: scripts/sync-ecc-to-codex.sh (Codex), its prompts are
 #                     converted to ecc-*.md commands for Claude Code and OpenCode
 #   caveman           upstream clone: install.sh (OpenCode, OpenClaw), Claude plugin,
-#                     `caveman enable` (proxy routing), `caveman skills install`
-#   codebase-memory   `codebase-memory-mcp install` (hooks, MCP, skills, agents)
+#                     `caveman enable` (proxy routing)
+#   codebase-memory   `codebase-memory-mcp install` (hooks, MCP, agents)
 #   codegraph, rtk    `codegraph install`, `rtk init`
-#   browser-use       `browser-use skill`
+#   browser-use       uv tool install (runtime only; skill uses skills.tsv)
 #   plugins           `claude plugin install`, `codex plugin add`
-# The bundle holds only this user's own configuration: settings, MCP servers, curated task
-# agents, custom skills, and a personal CLAUDE.md section. Upstream clones live in
-# ~/.local/share/ai-setup/ (update them with `git pull` there, then re-run).
+# The bundle holds personal configuration plus local skills and preserved snapshots of
+# generated codebase-memory and Superset-prefixed skills. Upstream clones and the stable
+# local skill source live in ~/.local/share/ai-setup/.
 #
 # Idempotent: every step checks current state first. Files that differ from the bundle are
 # backed up to ~/.ai-setup-backups/<timestamp>/ before being replaced. JSON configs are
@@ -170,18 +170,36 @@ cmd_export() {
   STAGE=$(mktemp -d)
   log "Staging configuration from $HOME"
 
-  # Skills: third-party ones are reinstalled from their sources; only custom skills ship.
-  local lock="$HOME/.agents/.skill-lock.json" custom=() d n
-  [ -f "$lock" ] &&
-    jq -r '.skills | to_entries | group_by(.value.source)[]
-           | "\(.[0].value.source)\t\(map(.key) | join(","))"' "$lock" >"$STAGE/skills.tsv"
-  for d in "$HOME"/.agents/skills/*/; do
+  # Local skills are a portable Skills CLI source, not files copied into agent homes.
+  local lock="$HOME/.agents/.skill-lock.json" d n source
+  local -A local_skills=()
+  if [ -f "$lock" ]; then
+    jq -r '.skills | to_entries | map(select(.value.sourceType != "local"))
+      | group_by(.value.source)[]
+      | "\(.[0].value.source)\t\(map(.key) | join(","))"' "$lock" >"$STAGE/skills.tsv"
+    jq -r --arg src "$HOME/.claude/skills/synced" '
+      [.skills | to_entries[] | select(.value.source == $src) | .key] | sort
+      | select(length > 0) | "~/.claude/skills/synced\t\(join(","))"
+    ' "$lock" >>"$STAGE/skills.tsv"
+  fi
+  for d in "$HOME"/.agents/skills/*/ "$HOME"/.omp/agent/skills/*/; do
+    [ -f "$d/SKILL.md" ] || continue
     n=$(basename "$d")
-    case $n in browser-use | codebase-memory | superset*) continue ;; esac  # tool/app-installed
-    [ -f "$lock" ] && jq -e --arg n "$n" '.skills | has($n)' "$lock" >/dev/null && continue
-    custom+=("$n")
+    if [ -f "$lock" ]; then
+      source=$(jq -r --arg n "$n" '.skills[$n] // {sourceType:"local"} |
+        if .sourceType == "local" then (.source // "local") else "remote" end' "$lock")
+      case $source in remote | "$HOME/.claude/skills/synced") continue ;; esac
+    fi
+    local_skills["$n"]=$d
   done
-  for n in "${custom[@]}"; do stage_copy core ".agents/skills/$n"; done
+  for n in "${!local_skills[@]}"; do
+    mkdir -p "$STAGE/skills/$n"
+    tar -C "${local_skills[$n]}" "${TAR_EXCLUDES[@]}" --exclude=state -cf - . |
+      tar -C "$STAGE/skills/$n" -xf -
+  done
+  if ((${#local_skills[@]})); then
+    printf './skills\t%s\n' "$(printf '%s\n' "${!local_skills[@]}" | sort | paste -sd,)" >>"$STAGE/skills.tsv"
+  fi
   stage_copy core .config/rtk
   mkdir -p "$STAGE/core"
   [ -f "$HOME/.claude/CLAUDE.md" ] && claude_md_user_section "$HOME/.claude/CLAUDE.md" >"$STAGE/core/CLAUDE.user.md"
@@ -202,7 +220,6 @@ cmd_export() {
   # claude: curated agents, custom-skill links, settings, user MCP servers, plugin list.
   stage_copy claude .claude/agents
   drop_cbm_agents "$STAGE/claude/home/.claude/agents" md
-  for n in "${custom[@]}"; do stage_copy claude ".claude/skills/$n"; done
   mkdir -p "$STAGE/claude/merge"
   [ -f "$HOME/.claude/settings.json" ] &&
     jq --arg re "$TOOL_HOOK_RE" "$JQ_STRIP_HOOKS
@@ -599,34 +616,104 @@ copy_if_changed() { write_if_changed "$2" "$1" "${2/#$HOME/\~}"; }
 # ─────────────────────────────────────────────────────────────────────────────
 
 install_skills() {
-  local spec="$STAGE/skills.tsv" src names missing gone n
+  local spec="$STAGE/skills.tsv" src names n target destination source_skill legacy
+  local lock="$HOME/.agents/.skill-lock.json" missing=() options=() destinations=()
   [ -f "$spec" ] || return 0
-  local agents=(-a universal)
-  ((T_CLAUDE)) && agents+=(-a claude-code)
   while IFS=$'\t' read -r src names; do
+    [ -n "$src" ] || continue
+    options=()
+    if [[ $src == '~/'* ]]; then
+      src="$HOME/${src:2}"
+      if [ ! -d "$src" ] && ! ((DRY)); then
+        warn "account skill source $src is unavailable; sign in and sync it, then rerun"
+        continue
+      fi
+      options+=(--full-depth)
+    fi
+    if [[ $src == ./* ]]; then
+      target="$SRC_ROOT/${src#./}"
+      if ((DRY)); then
+        printf '  [dry-run] local skill source %s → %s\n' "$src" "$target"
+      elif ! diff -qr "$STAGE/${src#./}" "$target" >/dev/null 2>&1; then
+        [ ! -e "$target" ] || backup "$target"
+        rm -rf "$target"
+        mkdir -p "$target"
+        cp -a "$STAGE/${src#./}/." "$target/"
+      fi
+      src=$target
+    fi
     missing=()
-    for n in ${names//,/ }; do [ -d "$HOME/.agents/skills/$n" ] || missing+=(--skill "$n"); done
-    ((${#missing[@]})) || continue
-    run npx -y skills add "$src" -g -y "${missing[@]}" "${agents[@]}" </dev/null >/dev/null 2>&1 || true
-    ((DRY)) && continue
-    # Skills renamed or removed upstream since export are reported, not fatal.
-    gone=()
-    for n in ${names//,/ }; do [ -d "$HOME/.agents/skills/$n" ] || gone+=("$n"); done
-    ((${#gone[@]})) && warn "$src no longer publishes: ${gone[*]} (re-export to refresh skills.tsv)"
+    for n in ${names//,/ }; do
+      source_skill=""
+      if [[ $src == "$SRC_ROOT/"* ]]; then
+        source_skill="$src/$n"
+      elif [ "$src" = "$HOME/.claude/skills/synced" ] && [ -d "$src" ]; then
+        source_skill=$(find "$src" -type f -path "*/$n/SKILL.md" -print -quit)
+        [ -n "$source_skill" ] || die "account source no longer provides $n"
+        source_skill=${source_skill%/SKILL.md}
+      fi
+      if [ ! -f "$HOME/.agents/skills/$n/SKILL.md" ] ||
+        ! jq -e --arg n "$n" --arg src "$src" '.skills[$n].source == $src' "$lock" >/dev/null 2>&1; then
+        missing+=(--skill "$n")
+      elif [ -n "$source_skill" ] &&
+        ! diff -qr --exclude=state --exclude=__pycache__ "$source_skill" "$HOME/.agents/skills/$n" >/dev/null; then
+        missing+=(--skill "$n")
+      fi
+    done
+    if ((${#missing[@]})); then
+      [ ! -f "$lock" ] || ((DRY)) || [ -f "$BACKUP_ROOT/.agents/.skill-lock.json" ] || backup "$lock"
+      for n in ${names//,/ }; do
+        [ ! -e "$HOME/.agents/skills/$n" ] || ((DRY)) || backup "$HOME/.agents/skills/$n"
+        if ! ((DRY)) && [ -d "$HOME/.agents/skills/$n/state" ]; then
+          mkdir -p "$STAGE/runtime-state"
+          rm -rf "$STAGE/runtime-state/$n"
+          cp -a "$HOME/.agents/skills/$n/state" "$STAGE/runtime-state/$n"
+        fi
+      done
+      run npx -y skills add "$src" -g -y "${missing[@]}" -a universal "${options[@]}" </dev/null ||
+        die "Skills CLI failed for $src"
+      if ! ((DRY)); then
+        for n in ${names//,/ }; do
+          target="$HOME/.agents/skills/$n"
+          if [ -d "$STAGE/runtime-state/$n" ] && [ ! -e "$target/state" ]; then
+            cp -a "$STAGE/runtime-state/$n" "$target/state"
+          fi
+        done
+      fi
+    fi
+    for n in ${names//,/ }; do
+      target="$HOME/.agents/skills/$n"
+      ((DRY)) || { [ -f "$target/SKILL.md" ] &&
+        jq -e --arg n "$n" --arg src "$src" '.skills[$n].source == $src' "$lock" >/dev/null; } ||
+        die "skill $n was not installed from $src"
+      destinations=()
+      ((T_OMP)) && destinations+=("$HOME/.omp/agent/skills/$n")
+      ((T_CLAUDE)) && destinations+=("$HOME/.claude/skills/$n")
+      # Adopt existing standalone copies; do not install new legacy-agent targets.
+      if ((T_OMP)); then
+        for legacy in "$HOME/.claude/skills" "$HOME/.codex/skills" \
+          "$HOME/.config/opencode/skills" "$HOME/.openclaw/skills"; do
+          if [ -f "$legacy/$n/SKILL.md" ] && [ ! -L "$legacy/$n" ]; then
+            destinations+=("$legacy/$n")
+          fi
+        done
+      fi
+      for destination in "${destinations[@]}"; do
+        [ -L "$destination" ] && [ "$(readlink "$destination")" = "$target" ] && continue
+        if ((DRY)); then printf '  [dry-run] skill link %s → %s\n' "$destination" "$target"; continue; fi
+        if [ -e "$destination" ] || [ -L "$destination" ]; then
+          backup "$destination"
+          if [ -d "$destination/state" ] && [ ! -e "$target/state" ]; then
+            cp -a "$destination/state" "$target/state"
+          fi
+          rm -rf "$destination"
+        fi
+        mkdir -p "$(dirname "$destination")"
+        ln -s "$target" "$destination"
+      done
+    done
   done <"$spec"
-  ok "skills from $(wc -l <"$spec") sources installed (npx skills)"
-}
-
-install_browser_use_skill() {
-  have browser-use || return 0
-  local tmp dirs=("$HOME/.agents/skills/browser-use") d
-  ((T_CLAUDE)) && dirs+=("$HOME/.claude/skills/browser-use")
-  ((T_OPENCODE)) && dirs+=("$HOME/.config/opencode/skills/browser-use")
-  ((T_OPENCLAW)) && dirs+=("$HOME/.openclaw/skills/browser-use")
-  tmp=$(mktemp)
-  browser-use skill >"$tmp" 2>/dev/null || { warn "browser-use skill failed"; rm -f "$tmp"; return; }
-  for d in "${dirs[@]}"; do copy_if_changed "$tmp" "$d/SKILL.md"; done
-  rm -f "$tmp"
+  ok "skills installed through npx skills"
 }
 
 # codebase-memory-mcp configures every detected agent (hooks, MCP, skill, agents, plugin).
@@ -687,9 +774,6 @@ integrate_caveman() {
   have caveman || return 0
   if ((T_CLAUDE)); then run caveman enable claude 2>&1 | tail -1 || true; fi
   if ((T_CODEX)); then run caveman enable codex 2>&1 | tail -1 || true; fi
-  if ((T_CLAUDE)) && [ ! -f "$HOME/.claude/skills/caveman-learn/SKILL.md" ]; then
-    run caveman skills install caveman-learn --user --no-pixel </dev/null >/dev/null || warn "caveman-learn skill failed"
-  fi
 }
 
 # ECC prompt → Claude Code / OpenCode command (description from the prompt's own heading).
@@ -804,7 +888,6 @@ configure() {
   ((T_CLAUDE || T_CODEX || T_OPENCODE)) && ensure_repo ECC "$ECC_URL"
   ((T_CLAUDE || T_CODEX || T_OPENCODE || T_OPENCLAW)) && ensure_repo caveman "$CAVEMAN_URL"
   install_skills
-  install_browser_use_skill
   ((T_CLAUDE)) && restore_claude_plugins
   integrate_rtk
   integrate_codegraph

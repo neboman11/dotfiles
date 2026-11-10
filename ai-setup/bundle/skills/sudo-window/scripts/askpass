@@ -1,0 +1,11 @@
+#!/bin/sh
+# Stdout goes directly to sudo's private pipe, not agent output.
+test -n "${OMP_SUDO_ATTEMPT_DIR:-}" || exit 1
+/usr/bin/mkdir -m 700 -- "$OMP_SUDO_ATTEMPT_DIR/used" 2>/dev/null || exit 1
+exec /usr/bin/kdialog --title 'OMP — shared sudo approval' --password "${OMP_SUDO_REASON:-Local system administration}
+
+Approve full sudo access for every process running as your user.
+Cache expires after 15 minutes of sudo inactivity.
+An agent with root access can make persistent changes.
+Password goes only to sudo; never to the agent.
+Cancel to deny."
