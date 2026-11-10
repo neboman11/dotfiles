@@ -20,6 +20,7 @@
 #                     `caveman enable` (proxy routing)
 #   codebase-memory   `codebase-memory-mcp install` (hooks, MCP, agents)
 #   codegraph, rtk    `codegraph install`, `rtk init`
+#   impeccable        `npx impeccable install` (skill, Claude agents, hooks; omp/Claude/Codex/OpenCode)
 #   browser-use       uv tool install (runtime only; skill uses skills.tsv)
 #   plugins           `claude plugin install`, `codex plugin add`
 # The bundle holds personal configuration plus local skills and preserved snapshots of
@@ -50,7 +51,7 @@ ECC_URL=https://github.com/affaan-m/ECC.git
 CAVEMAN_URL=https://github.com/JuliusBrussee/caveman.git
 CBM_AGENTS=(codebase-memory codebase-memory-scout codebase-memory-auditor)
 # Hook commands owned by installers this script runs (or by the Superset app).
-TOOL_HOOK_RE='caveman-proxy.{0,2} native-hook|caveman.{0,2} shrink-hook|cbm-|codebase-memory-mcp.{0,2} hook-augment|codegraph prompt-hook|^rtk hook|SUPERSET_HOME_DIR'
+TOOL_HOOK_RE='caveman-proxy.{0,2} native-hook|caveman.{0,2} shrink-hook|cbm-|codebase-memory-mcp.{0,2} hook-augment|codegraph prompt-hook|^rtk hook|skills/impeccable/scripts/impeccable|SUPERSET_HOME_DIR'
 # MCP servers registered by installers this script runs.
 TOOL_MCP_RE='^(caveman|codegraph|codebase-memory-mcp)$'
 
@@ -162,6 +163,7 @@ claude_md_user_section() {
 drop_cbm_agents() {
   local dir=$1 ext=$2 n
   for n in "${CBM_AGENTS[@]}"; do rm -f "$dir/$n.$ext"; done
+  rm -f "$dir"/impeccable-*."$ext"   # `npx impeccable install` ships these
 }
 
 cmd_export() {
@@ -190,6 +192,7 @@ cmd_export() {
         if .sourceType == "local" then (.source // "local") else "remote" end' "$lock")
       case $source in remote | "$HOME/.claude/skills/synced") continue ;; esac
     fi
+    [ "$n" = impeccable ] && continue   # owned by `npx impeccable install`
     local_skills["$n"]=$d
   done
   for n in "${!local_skills[@]}"; do
@@ -760,6 +763,23 @@ integrate_rtk() {
   else warn "rtk init failed"; fi
 }
 
+# Impeccable: skill copies per agent, Claude Code agents, and Claude/Codex hooks.
+integrate_impeccable() {
+  local providers=() list
+  ((T_OMP)) && [ ! -f "$HOME/.omp/agent/skills/impeccable/SKILL.md" ] && providers+=(omp)
+  ((T_CLAUDE)) && [ ! -f "$HOME/.claude/skills/impeccable/SKILL.md" ] && providers+=(claude)
+  ((T_CODEX)) && [ ! -f "$HOME/.agents/skills/impeccable/SKILL.md" ] && providers+=(codex)
+  ((T_OPENCODE)) && [ ! -f "$HOME/.config/opencode/skills/impeccable/SKILL.md" ] && providers+=(opencode)
+  if ((${#providers[@]} == 0)); then ok "impeccable present"; return; fi
+  list=$(IFS=,; echo "${providers[*]}")
+  # Run from $HOME: the installer places the Codex hooks file relative to the working directory.
+  if (cd "$HOME" && run npx -y impeccable install -y --global --providers="$list" </dev/null >/dev/null 2>&1); then
+    ok "impeccable installed for $list"
+  else
+    warn "impeccable install failed"
+  fi
+}
+
 integrate_caveman() {
   local only=()
   ((T_OPENCODE)) && only+=(--only opencode)
@@ -892,6 +912,7 @@ configure() {
   integrate_rtk
   integrate_codegraph
   integrate_cbm
+  ((T_OMP || T_CLAUDE || T_CODEX || T_OPENCODE)) && integrate_impeccable
   ((T_CLAUDE || T_CODEX || T_OPENCODE || T_OPENCLAW)) && integrate_caveman
   ((T_CLAUDE || T_CODEX || T_OPENCODE)) && integrate_ecc
   ((T_CODEX)) && restore_codex_plugins
